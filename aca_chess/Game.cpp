@@ -54,5 +54,5 @@ void Game::update()
 void Game::draw()
 {
     board.draw();
-    std::cout << std::boolalpha << board.isWinInTwoMoves() << std::endl;;
+//    std::cout << std::boolalpha << board.isWinInTwoMoves() << std::endl;;
 }
