@@ -14,7 +14,7 @@ class Game
 {
 private:
     Board board;
-    
+    //
 public:
     void init();
     void update();
