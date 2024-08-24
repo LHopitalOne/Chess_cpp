@@ -13,6 +13,8 @@
 #include <bitset>
 #include <locale>
 
+#include <chrono>
+
 void Game::init()
 {
     std::locale::global(std::locale());
@@ -54,5 +56,7 @@ void Game::update()
 void Game::draw()
 {
     board.draw();
-    std::cout << std::boolalpha << board.isWinInTwoMoves() << std::endl;;
+    auto start = std::chrono::high_resolution_clock::now();
+    std::cout << std::boolalpha << board.isWinInTwoMoves() << std::endl;
+    std::cout << (std::chrono::high_resolution_clock::now() - start);
 }
