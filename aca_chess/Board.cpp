@@ -62,6 +62,122 @@ uint64_t& Board::getEncoding(Piece piece)
     throw std::invalid_argument("The argument piece is Piece::NONE");
 }
 
+uint64_t Board::getValidMoves(int row, int col)
+{
+    Piece p = get(row, col);
+    uint64_t vMoves = 0ULL;
+    
+    switch (p)
+    {
+        case Piece::WHITEKING:
+        case Piece::BLACKKING:
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    if (i == 0 && j == 0) continue; // Skip the current position
+                    
+                    int vRow = row + i;
+                    int vCol = col + j;
+                    
+                    // Check if the new position is within bounds
+                    if (vRow >= 0 && vRow < 8 && vCol >= 0 && vCol < 8)
+                    {
+                        vMoves |= 1ULL << (vRow * 8 + (7 - vCol));
+                    }
+                }
+            }
+            return vMoves;
+
+        case Piece::WHITEQUEEN:
+        case Piece::BLACKQUEEN:
+            // Rook-like movement (horizontal and vertical)
+            for (int i = 1; i < 8; i++)
+            {
+                // Horizontal right
+                if (col + i < 8) vMoves |= 1ULL << (row * 8 + (7 - (col + i)));
+                // Horizontal left
+                if (col - i >= 0) vMoves |= 1ULL << (row * 8 + (7 - (col - i)));
+                // Vertical up
+                if (row + i < 8) vMoves |= 1ULL << ((row + i) * 8 + (7 - col));
+                // Vertical down
+                if (row - i >= 0) vMoves |= 1ULL << ((row - i) * 8 + (7 - col));
+            }
+
+            // Bishop-like movement (diagonals)
+            for (int i = 1; i < 8; i++)
+            {
+                // Top-right diagonal
+                if (row + i < 8 && col + i < 8) vMoves |= 1ULL << ((row + i) * 8 + (7 - (col + i)));
+                // Top-left diagonal
+                if (row + i < 8 && col - i >= 0) vMoves |= 1ULL << ((row + i) * 8 + (7 - (col - i)));
+                // Bottom-right diagonal
+                if (row - i >= 0 && col + i < 8) vMoves |= 1ULL << ((row - i) * 8 + (7 - (col + i)));
+                // Bottom-left diagonal
+                if (row - i >= 0 && col - i >= 0) vMoves |= 1ULL << ((row - i) * 8 + (7 - (col - i)));
+            }
+            return vMoves;
+
+        // Add cases for other pieces like rook, bishop, knight, and pawn
+        case Piece::WHITEROOK:
+        case Piece::BLACKROOK:
+            for (int i = 1; i < 8; i++)
+            {
+                if (col + i < 8) vMoves |= 1ULL << (row * 8 + (7 - (col + i))); // Right
+                if (col - i >= 0) vMoves |= 1ULL << (row * 8 + (7 - (col - i))); // Left
+                if (row + i < 8) vMoves |= 1ULL << ((row + i) * 8 + (7 - col)); // Up
+                if (row - i >= 0) vMoves |= 1ULL << ((row - i) * 8 + (7 - col)); // Down
+            }
+            return vMoves;
+
+        case Piece::WHITEBISHOP:
+        case Piece::BLACKBISHOP:
+            for (int i = 1; i < 8; i++)
+            {
+                if (row + i < 8 && col + i < 8) vMoves |= 1ULL << ((row + i) * 8 + (7 - (col + i))); // Top-right
+                if (row + i < 8 && col - i >= 0) vMoves |= 1ULL << ((row + i) * 8 + (7 - (col - i))); // Top-left
+                if (row - i >= 0 && col + i < 8) vMoves |= 1ULL << ((row - i) * 8 + (7 - (col + i))); // Bottom-right
+                if (row - i >= 0 && col - i >= 0) vMoves |= 1ULL << ((row - i) * 8 + (7 - (col - i))); // Bottom-left
+            }
+            return vMoves;
+
+        case Piece::WHITEKNIGHT:
+        case Piece::BLACKKNIGHT:
+        {
+            int knightMoves[8][2] = {
+                {2, 1}, {2, -1}, {-2, 1}, {-2, -1},
+                {1, 2}, {1, -2}, {-1, 2}, {-1, -2}
+            };
+            for (auto& move : knightMoves)
+            {
+                int vRow = row + move[0];
+                int vCol = col + move[1];
+                
+                if (vRow >= 0 && vRow < 8 && vCol >= 0 && vCol < 8)
+                {
+                    vMoves |= 1ULL << (vRow * 8 + (7 - vCol));
+                }
+            }
+            return vMoves;
+        }
+
+        case Piece::WHITEPAWN:
+            if (row + 1 < 8) vMoves |= 1ULL << ((row + 1) * 8 + (7 - col)); // Single step
+            if (row == 1 && row + 2 < 8) vMoves |= 1ULL << ((row + 2) * 8 + (7 - col)); // Double step
+            return vMoves;
+
+        case Piece::BLACKPAWN:
+            if (row - 1 >= 0) vMoves |= 1ULL << ((row - 1) * 8 + (7 - col)); // Single step
+            if (row == 6 && row - 2 >= 0) vMoves |= 1ULL << ((row - 2) * 8 + (7 - col)); // Double step
+            return vMoves;
+
+        default:
+            break;
+    }
+
+    return 0;
+}
+
 void Board::__set(int row, int col, Piece piece)
 {
     Piece p = get(row, col);
@@ -92,166 +208,189 @@ void Board::set(Coordinate coord, Piece piece)
     std::cout << "\n";
 }
 
-int Board::minimax(int depth, bool isMaximizingPlayer) {
+int Board::minimax(int depth, bool isMaximizingPlayer, int alpha=INT_MIN, int beta=INT_MAX)
+{
     if (depth == 0)
         return isMate();
 
-    if (isMaximizingPlayer) // White's move
-    {
+    if (isMaximizingPlayer) {
         int maxEval = INT_MIN;
-        
+
         uint64_t allWhitePieces = positionWhitePawn | positionWhiteRook | positionWhiteBishop |
                                   positionWhiteKnight | positionWhiteQueen | positionWhiteKing;
-        
-        while (allWhitePieces)
-        {
+
+        while (allWhitePieces) {
             int pos = (int)log2(allWhitePieces & -allWhitePieces);
             int rowFrom = pos >> 3;
-            int colFrom = 8 - (pos + 1) & 7;
-            
+            int colFrom = 8 - (pos + 1) & 7;  // Simplified bitwise operation
+
             Piece piece = get(rowFrom, colFrom);
-            
-            for (int rowTo = 0; rowTo < 8; rowTo++)
-            {
-                for (int colTo = 0; colTo < 8; colTo++)
-                {
-                    if (rowFrom == rowTo && colFrom == colTo)
-                        continue;
-                    if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
-                        continue;
 
-                    // Make the move
-                    Piece originalDestination = get(rowTo, colTo);
-                    if (__move(rowFrom, colFrom, rowTo, colTo))
-                    {
-                        int eval = minimax(depth - 1, false);
-                        maxEval = std::max(maxEval, eval);
+            uint64_t validMoves = getValidMoves(rowFrom, colFrom); // Generate all valid moves in one go
 
-                        // Undo the move
-                        __set(rowTo, colTo, originalDestination);
-                        __set(rowFrom, colFrom, piece);
-                    }
+            while (validMoves) {
+                int targetPos = (int)log2(validMoves & -validMoves);
+                int rowTo = targetPos >> 3;
+                int colTo = 8 - (targetPos + 1) & 7;
+
+                // Make the move
+                Piece originalDestination = get(rowTo, colTo);
+                if (__move(rowFrom, colFrom, rowTo, colTo)) {
+                    int eval = minimax(depth - 1, false, alpha, beta);
+                    maxEval = std::max(maxEval, eval);
+                    alpha = std::max(alpha, eval);
+
+                    // Undo the move
+                    __set(rowTo, colTo, originalDestination);
+                    __set(rowFrom, colFrom, piece);
+
+                    if (beta <= alpha)
+                        break; // Beta cut-off
                 }
+
+                validMoves &= validMoves - 1;
             }
-            
+
             allWhitePieces &= allWhitePieces - 1;
         }
-        
-//        for (int rowFrom = 0; rowFrom < 8; rowFrom++)
-//        {
-//            for (int colFrom = 0; colFrom < 8; colFrom++)
-//            {
-//                Piece piece = get(rowFrom, colFrom);
-//
-//                if (piece == Piece::NONE || piece > Piece::WHITEKING)
-//                    continue;
-//
-//                for (int rowTo = 0; rowTo < 8; rowTo++)
-//                {
-//                    for (int colTo = 0; colTo < 8; colTo++)
-//                    {
-//                        if (rowFrom == rowTo && colFrom == colTo)
-//                            continue;
-//                        if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
-//                            continue;
-//
-//                        // Make the move
-//                        Piece originalDestination = get(rowTo, colTo);
-//                        if (__move(rowFrom, colFrom, rowTo, colTo))
-//                        {
-//                            int eval = minimax(depth - 1, false);
-//                            maxEval = std::max(maxEval, eval);
-//
-//                            // Undo the move
-//                            __set(rowTo, colTo, originalDestination);
-//                            __set(rowFrom, colFrom, piece);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        
+
         return maxEval;
-    }
-    else // Black's move
-    {
+    } else {
         int minEval = INT_MAX;
-        
+
         uint64_t allBlackPieces = positionBlackPawn | positionBlackRook | positionBlackBishop |
                                   positionBlackKnight | positionBlackQueen | positionBlackKing;
-        
-        while (allBlackPieces)
-        {
+
+        while (allBlackPieces) {
             int pos = (int)log2(allBlackPieces & -allBlackPieces);
             int rowFrom = pos >> 3;
             int colFrom = 8 - (pos + 1) & 7;
-            
+
             Piece piece = get(rowFrom, colFrom);
-            
-            for (int rowTo = 0; rowTo < 8; rowTo++)
-            {
-                for (int colTo = 0; colTo < 8; colTo++)
-                {
-                    if (rowFrom == rowTo && colFrom == colTo)
-                        continue;
-                    if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
-                        continue;
 
-                    // Make the move
-                    Piece originalDestination = get(rowTo, colTo);
-                    if (__move(rowFrom, colFrom, rowTo, colTo))
-                    {
-                        int eval = minimax(depth - 1, true);
-                        minEval = std::min(minEval, eval);
+            uint64_t validMoves = getValidMoves(rowFrom, colFrom);
 
-                        // Undo the move
-                        __set(rowTo, colTo, originalDestination);
-                        __set(rowFrom, colFrom, piece);
-                    }
+            while (validMoves) {
+                int targetPos = (int)log2(validMoves & -validMoves);
+                int rowTo = targetPos >> 3;
+                int colTo = 8 - (targetPos + 1) & 7;
+
+                // Make the move
+                Piece originalDestination = get(rowTo, colTo);
+                if (__move(rowFrom, colFrom, rowTo, colTo)) {
+                    int eval = minimax(depth - 1, true, alpha, beta);
+                    minEval = std::min(minEval, eval);
+                    beta = std::min(beta, eval);
+
+                    // Undo the move
+                    __set(rowTo, colTo, originalDestination);
+                    __set(rowFrom, colFrom, piece);
+
+                    if (beta <= alpha)
+                        break; // Alpha cut-off
                 }
+
+                validMoves &= validMoves - 1;
             }
-            
+
             allBlackPieces &= allBlackPieces - 1;
         }
-        
-//        for (int rowFrom = 0; rowFrom < 8; rowFrom++)
-//        {
-//            for (int colFrom = 0; colFrom < 8; colFrom++)
-//            {
-//                Piece piece = get(rowFrom, colFrom);
-//
-//                if (piece == Piece::NONE || piece <= Piece::WHITEKING)
-//                    continue;
-//
-//                for (int rowTo = 0; rowTo < 8; rowTo++)
-//                {
-//                    for (int colTo = 0; colTo < 8; colTo++)
-//                    {
-//                        if (rowFrom == rowTo && colFrom == colTo)
-//                            continue;
-//                        if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
-//                            continue;
-//
-//                        // Make the move
-//                        Piece originalDestination = get(rowTo, colTo);
-//                        if (__move(rowFrom, colFrom, rowTo, colTo))
-//                        {
-//                            int eval = minimax(depth - 1, true);
-//                            minEval = std::min(minEval, eval);
-//
-//                            // Undo the move
-//                            __set(rowTo, colTo, originalDestination);
-//                            __set(rowFrom, colFrom, piece);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-        
+
         return minEval;
     }
 }
 
+//int Board::minimax(int depth, bool isMaximizingPlayer) {
+//    if (depth == 0)
+//        return isMate();
+//
+//    if (isMaximizingPlayer) // White's move
+//    {
+//        int maxEval = INT_MIN;
+//        
+//        uint64_t allWhitePieces = positionWhitePawn | positionWhiteRook | positionWhiteBishop |
+//                                  positionWhiteKnight | positionWhiteQueen | positionWhiteKing;
+//        
+//        while (allWhitePieces)
+//        {
+//            int pos = (int)log2(allWhitePieces & -allWhitePieces);
+//            int rowFrom = pos >> 3;
+//            int colFrom = 8 - (pos + 1) & 7;
+//            
+//            Piece piece = get(rowFrom, colFrom);
+//            
+//            for (int rowTo = 0; rowTo < 8; rowTo++)
+//            {
+//                for (int colTo = 0; colTo < 8; colTo++)
+//                {
+//                    if (rowFrom == rowTo && colFrom == colTo)
+//                        continue;
+//                    if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
+//                        continue;
+//
+//                    // Make the move
+//                    Piece originalDestination = get(rowTo, colTo);
+//                    if (__move(rowFrom, colFrom, rowTo, colTo))
+//                    {
+//                        int eval = minimax(depth - 1, false);
+//                        maxEval = std::max(maxEval, eval);
+//
+//                        // Undo the move
+//                        __set(rowTo, colTo, originalDestination);
+//                        __set(rowFrom, colFrom, piece);
+//                    }
+//                }
+//            }
+//            
+//            allWhitePieces &= allWhitePieces - 1;
+//        }
+//        
+//        return maxEval;
+//    }
+//    else // Black's move
+//    {
+//        int minEval = INT_MAX;
+//        
+//        uint64_t allBlackPieces = positionBlackPawn | positionBlackRook | positionBlackBishop |
+//                                  positionBlackKnight | positionBlackQueen | positionBlackKing;
+//        
+//        while (allBlackPieces)
+//        {
+//            int pos = (int)log2(allBlackPieces & -allBlackPieces);
+//            int rowFrom = pos >> 3;
+//            int colFrom = 8 - (pos + 1) & 7;
+//            
+//            Piece piece = get(rowFrom, colFrom);
+//            
+//            for (int rowTo = 0; rowTo < 8; rowTo++)
+//            {
+//                for (int colTo = 0; colTo < 8; colTo++)
+//                {
+//                    if (rowFrom == rowTo && colFrom == colTo)
+//                        continue;
+//                    if (!isMoveValid(rowFrom, colFrom, rowTo, colTo))
+//                        continue;
+//
+//                    // Make the move
+//                    Piece originalDestination = get(rowTo, colTo);
+//                    if (__move(rowFrom, colFrom, rowTo, colTo))
+//                    {
+//                        int eval = minimax(depth - 1, true);
+//                        minEval = std::min(minEval, eval);
+//
+//                        // Undo the move
+//                        __set(rowTo, colTo, originalDestination);
+//                        __set(rowFrom, colFrom, piece);
+//                    }
+//                }
+//            }
+//            
+//            allBlackPieces &= allBlackPieces - 1;
+//        }
+//        
+//        return minEval;
+//    }
+//}
 
 Piece Board::get(int row, int col) const
 {
@@ -284,97 +423,6 @@ Piece Board::get(int row, int col) const
     else
         return Piece::NONE;
 }
-
-//bool Board::isMoveValid(int rowFrom, int colFrom, int rowTo, int colTo) const
-//{
-//    Piece p = get(rowFrom, colFrom);
-//    Piece target = get(rowTo, colTo);
-//
-//    if (rowFrom < 0 || rowFrom >= 8 || colFrom < 0 || colFrom >= 8 ||
-//        rowTo < 0 || rowTo >= 8 || colTo < 0 || colTo >= 8)
-//        return false;
-//
-//    if (p == Piece::WHITEPAWN)
-//    {
-//        if (rowTo - rowFrom == 1 && colFrom == colTo && target == Piece::NONE)
-//            return true;
-//        else if (rowTo - rowFrom == 1 && std::abs(colFrom - colTo) == 1 && target != Piece::NONE)
-//            return true;
-//        else if (rowFrom == 1 && rowTo - rowFrom == 2 && colFrom == colTo && get(rowFrom + 1, colFrom) == Piece::NONE && target == Piece::NONE)
-//            return true;
-//    }
-//    else if (p == Piece::WHITEKNIGHT)
-//    {
-//        int rowDiff = std::abs(rowTo - rowFrom);
-//        int colDiff = std::abs(colTo - colFrom);
-//        
-//        if ((rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2))
-//            if (target == Piece::NONE || (int)target > (int)Piece::WHITEKING)
-//                return true;
-//    }
-//    else if (p == Piece::WHITEBISHOP)
-//    {
-//        int rowDiff = std::abs(rowTo - rowFrom);
-//        int colDiff = std::abs(colTo - colFrom);
-//        
-//        if (rowDiff == colDiff)
-//        {
-//            int rowStep = (rowTo - rowFrom) / rowDiff;
-//            int colStep = (colTo - colFrom) / colDiff;
-//            for (int i = 1; i < rowDiff; ++i)
-//                if (get(rowFrom + i * rowStep, colFrom + i * colStep) != Piece::NONE)
-//                    return false;
-//                    
-//            if (target == Piece::NONE || (int)target > (int)Piece::WHITEKING)
-//                return true;
-//        }
-//    }
-//    else if (p == Piece::WHITEROOK)
-//    {
-//        if (rowFrom == rowTo || colFrom == colTo)
-//        {
-//            int rowStep = (rowTo - rowFrom) ? (rowTo - rowFrom) / std::abs(rowTo - rowFrom) : 0;
-//            int colStep = (colTo - colFrom) ? (colTo - colFrom) / std::abs(colTo - colFrom) : 0;
-//            int distance = std::max(std::abs(rowTo - rowFrom), std::abs(colTo - colFrom));
-//            
-//            for (int i = 1; i < distance; ++i)
-//                if (get(rowFrom + i * rowStep, colFrom + i * colStep) != Piece::NONE)
-//                    return false;
-//                    
-//            if (target == Piece::NONE || (int)target > (int)Piece::WHITEKING)
-//                return true;
-//        }
-//    }
-//    else if (p == Piece::WHITEQUEEN)
-//    {
-//        int rowDiff = std::abs(rowTo - rowFrom);
-//        int colDiff = std::abs(colTo - colFrom);
-//        
-//        if (rowDiff == colDiff || rowFrom == rowTo || colFrom == colTo)
-//        {
-//            int rowStep = (rowTo - rowFrom) ? (rowTo - rowFrom) / std::abs(rowTo - rowFrom) : 0;
-//            int colStep = (colTo - colFrom) ? (colTo - colFrom) / std::abs(colTo - colFrom) : 0;
-//            int distance = std::max(rowDiff, colDiff);
-//            
-//            for (int i = 1; i < distance; ++i)
-//                if (get(rowFrom + i * rowStep, colFrom + i * colStep) != Piece::NONE)
-//                    return false;
-//            
-//            if (target == Piece::NONE || (int)target > (int)Piece::WHITEKING)
-//                return true;
-//        }
-//    }
-//    else if (p == Piece::WHITEKING)
-//    {
-//        int rowDiff = std::abs(rowTo - rowFrom);
-//        int colDiff = std::abs(colTo - colFrom);
-//        
-//        if ((rowDiff <= 1 && colDiff <= 1) && (target == Piece::NONE || (int)target > (int)Piece::WHITEKING))
-//            return true;
-//    }
-//
-//    return false;
-//}
 
 bool Board::isMoveValid(int rowFrom, int colFrom, int rowTo, int colTo) {
     Piece p = get(rowFrom, colFrom);

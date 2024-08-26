@@ -53,13 +53,15 @@ class Board
     uint64_t positionBlackKing;
 private:
     uint64_t& getEncoding(Piece piece);
+    uint64_t getValidMoves(int row, int col);
     
     bool isMoveValid(int rowFrom, int colFrom, int rowTo, int colTo);
     
     int evaluateBoard();
     bool isAttackWhite();
     bool isAttackBlack();
-    int minimax(int depth, bool isMaximizingPlayer);
+//    int minimax(int depth, bool isMaximizingPlayer);
+    int minimax(int depth, bool isMaximizingPlayer, int alpha, int beta);
     
     void __set(int row, int col, Piece piece);
     bool __move(int rowFrom, int colFrom, int rowTo, int colTo);
@@ -68,9 +70,7 @@ public:
     
     Piece get(int row, int col) const;
     void set(Coordinate coord, Piece piece);
-//    void set(int row, char col, Piece piece);
     bool move(Coordinate fromCoord, Coordinate toCoord);
-//    bool move(int rowFrom, int colFrom, int rowTo, int colTo);
     
     int isMate();
     int isAttack();
