@@ -7,22 +7,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "91B3B7CA-9221-4490-B287-60FB5CFE959B"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "aca_chess/Game.cpp"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "45"
-            endingLineNumber = "45"
-            landmarkName = "Game::init()"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "CC79D6CA-4674-4CE6-8B4F-5F21785C7776"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -54,15 +38,15 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "C3897485-752F-4AC5-83EC-A2CCA85B10BD"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "aca_chess/Board.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "222"
-            endingLineNumber = "222"
-            landmarkName = "Board::minimax(depth, isMaximizingPlayer, INT_MIN, INT_MAX)"
+            startingLineNumber = "223"
+            endingLineNumber = "223"
+            landmarkName = "Board::minimax(depth, isMaximizingPlayer, foundSolution, INT_MIN, INT_MAX)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -70,15 +54,31 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "A66A7C73-8FCA-4317-8283-4564A2352642"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "aca_chess/Board.cpp"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "232"
+            endingLineNumber = "232"
+            landmarkName = "Board::minimax(depth, isMaximizingPlayer, foundSolution, INT_MIN, INT_MAX)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "989E893E-A843-476E-BB57-A224B066868E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "aca_chess/Board.cpp"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "231"
-            endingLineNumber = "231"
-            landmarkName = "Board::minimax(depth, isMaximizingPlayer, INT_MIN, INT_MAX)"
+            startingLineNumber = "239"
+            endingLineNumber = "239"
+            landmarkName = "Board::minimax(depth, isMaximizingPlayer, foundSolution, INT_MIN, INT_MAX)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

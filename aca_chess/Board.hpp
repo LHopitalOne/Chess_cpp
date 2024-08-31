@@ -54,14 +54,13 @@ class Board
 private:
     uint64_t& getEncoding(Piece piece);
     uint64_t getValidMoves(int row, int col);
-    
     bool isMoveValid(int rowFrom, int colFrom, int rowTo, int colTo);
     
     int evaluateBoard();
     bool isAttackWhite();
     bool isAttackBlack();
 //    int minimax(int depth, bool isMaximizingPlayer);
-    int minimax(int depth, bool isMaximizingPlayer, int alpha, int beta);
+    int minimax(int depth, bool isMaximizingPlayer, bool& foundSolution, int alpha, int beta);
     
     void __set(int row, int col, Piece piece);
     bool __move(int rowFrom, int colFrom, int rowTo, int colTo);
